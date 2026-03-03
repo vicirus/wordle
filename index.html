@@ -165,9 +165,9 @@ body.theme-tiedye .tile.yellow{background:linear-gradient(135deg,#ffee00,#ff9900
 <div id="setup-screen">
   <h1>Wordle<span class="plus">+</span></h1>
   <p>Family Edition · Pick your player!</p>
-  <div class="setup-section">
+<div class="setup-section">
     <label>I am...</label>
-    <div class="setup-btns">
+    <div class="setup-btns" id="player-select">
       <button class="setup-btn" onclick="setupSelPlayer('mom',this)">
         <div class="monogram monogram-lg mon-mom">M</div>
         <span>Mom</span>
@@ -180,7 +180,7 @@ body.theme-tiedye .tile.yellow{background:linear-gradient(135deg,#ffee00,#ff9900
   </div>
   <div class="setup-section">
     <label>Celebrating with...</label>
-    <div class="setup-btns">
+    <div class="setup-btns" id="kid-select">
       <button class="setup-btn jamie-sel" onclick="setupSelKid('jamie',this)"><span style="font-size:2rem">🕷️</span><span>Jamie</span></button>
       <button class="setup-btn miles-sel" onclick="setupSelKid('miles',this)"><span style="font-size:2rem">🐰</span><span>Miles</span></button>
       <button class="setup-btn" onclick="setupSelKid('none',this)"><span style="font-size:2rem">🚫</span><span>No kid</span></button>
@@ -320,12 +320,12 @@ const TODAY=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})
 // ── SETUP ─────────────────────────────────────────────────
 function setupSelPlayer(p,el){
   setupPlayer=p;
-  document.querySelectorAll('.setup-section:nth-child(2) .setup-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('#player-select .setup-btn').forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel');checkSetupReady();
 }
 function setupSelKid(k,el){
   setupKid=k;
-  document.querySelectorAll('.setup-section:nth-child(3) .setup-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('#kid-select .setup-btn').forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel');checkSetupReady();
 }
 function checkSetupReady(){
