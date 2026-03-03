@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wordle+</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body.theme-classic{--bg:#f9f9f7;--bg2:#fff;--text:#1a1a2e;--subtext:#888;--border:#d3d6da;--key-bg:#d3d6da;--key-text:#1a1a2e;--green:#6aaa64;--yellow:#c9b458;--gray:#787c7e;--header-bg:#fff;--header-border:#d3d6da;--shadow:0 4px 20px rgba(0,0,0,0.08);--tile-empty:#fff;--tile-border:#d3d6da;--modal-bg:#fff;--tracker-bg:#fff;}
+body.theme-dark{--bg:#121213;--bg2:#1a1a1b;--text:#fff;--subtext:#818384;--border:#3a3a3c;--key-bg:#818384;--key-text:#fff;--green:#538d4e;--yellow:#b59f3b;--gray:#3a3a3c;--header-bg:#121213;--header-border:#3a3a3c;--shadow:0 4px 20px rgba(0,0,0,0.4);--tile-empty:#121213;--tile-border:#3a3a3c;--modal-bg:#1a1a1b;--tracker-bg:#1a1a1b;}
+body.theme-colorful{--bg:#e0f7fa;--bg2:#fff;--text:#1a1a2e;--subtext:#666;--border:#b2dfdb;--key-bg:#b2ebf2;--key-text:#004d40;--green:#00897b;--yellow:#f9a825;--gray:#90a4ae;--header-bg:#fff;--header-border:#b2dfdb;--shadow:0 4px 24px rgba(0,150,136,0.15);--tile-empty:#fff;--tile-border:#80cbc4;--modal-bg:#fff;--tracker-bg:#fff;}
+body.theme-tiedye{--bg:#0d0d0d;--bg2:#1a0a2e;--text:#fff;--subtext:#ccc;--border:#ff00ff44;--key-bg:#1a0a2e;--key-text:#fff;--green:#00ff88;--yellow:#ffee00;--gray:#555;--header-bg:#0d0d0d;--header-border:#ff00ff44;--shadow:0 4px 30px rgba(255,0,255,0.2);--tile-empty:#1a0a2e;--tile-border:#ff00ff44;--modal-bg:#0d0d0d;--tracker-bg:#0d0d0d;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.4s,color 0.3s;touch-action:manipulation;}
+body.theme-colorful{background:linear-gradient(135deg,#e0f7fa 0%,#fce4ec 50%,#e8f5e9 100%);background-attachment:fixed;}
+body.theme-tiedye::before{content:'';position:fixed;inset:0;z-index:0;background:conic-gradient(from 0deg at 30% 40%,#ff006688,#ff990088,#ffff0088,#00ff8888,#0099ff88,#9900ff88,#ff006688),conic-gradient(from 120deg at 70% 60%,#ff990088,#00ff8888,#0099ff88,#ff006688,#ffff0088,#9900ff88,#ff990088);background-blend-mode:screen;animation:tiedyespin 12s linear infinite;opacity:0.35;pointer-events:none;}
+@keyframes tiedyespin{0%{filter:hue-rotate(0deg) blur(8px);}100%{filter:hue-rotate(360deg) blur(8px);}}
+.monogram{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;color:#fff;flex-shrink:0;pointer-events:none;}
+.monogram-lg{width:48px;height:48px;border-radius:8px;font-size:1.4rem;}
+.mon-mom{background:linear-gradient(135deg,#6aaa64,#4a8a44);}
+.mon-dad{background:linear-gradient(135deg,#6aabdf,#3a7abf);}
+#setup-screen{position:fixed;inset:0;z-index:800;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;overflow-y:auto;}
+#setup-screen h1{font-size:2.4rem;font-weight:900;letter-spacing:4px;margin-bottom:6px;}
+#setup-screen .plus{color:var(--green);}
+#setup-screen p{color:var(--subtext);font-size:0.9rem;margin-bottom:36px;text-align:center;}
+.setup-section{width:100%;max-width:340px;margin-bottom:24px;}
+.setup-section label{font-weight:800;font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--subtext);display:block;margin-bottom:10px;}
+.setup-btns{display:flex;gap:10px;}
+.setup-btn{flex:1;padding:14px 10px;border-radius:16px;border:2px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.85rem;font-weight:800;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.setup-btn *{pointer-events:none;}
+.setup-btn.sel{border-color:var(--green);background:rgba(106,170,100,0.1);}
+.setup-btn.jamie-sel.sel{border-color:#c084fc;background:rgba(192,132,252,0.1);}
+.setup-btn.miles-sel.sel{border-color:#60a5fa;background:rgba(96,165,250,0.1);}
+.start-btn{width:100%;max-width:340px;padding:16px;background:var(--green);color:#fff;border:none;border-radius:16px;font-size:1.1rem;font-weight:900;cursor:pointer;opacity:0.4;transition:opacity 0.2s;margin-top:8px;pointer-events:none;}
+.start-btn.ready{opacity:1;pointer-events:auto;}
+#header{position:sticky;top:0;z-index:100;background:var(--header-bg);border-bottom:1px solid var(--header-border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;}
+#header h1{font-size:1.6rem;font-weight:900;letter-spacing:2px;flex:1;text-align:center;}
+#header h1 .plus{color:var(--green);}
+.hbtn{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--text);display:flex;align-items:center;justify-content:center;}
+.hbtn svg{width:22px;height:22px;stroke:var(--text);fill:none;stroke-width:2.5;stroke-linecap:round;}
+#settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:center;justify-content:center;}
+#settings-overlay.on{display:flex;}
+.smodal{background:var(--modal-bg);border-radius:20px;padding:28px;width:90%;max-width:380px;box-shadow:var(--shadow);}
+.smodal h2{font-size:1rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--subtext);margin-bottom:20px;text-align:center;}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.theme-btn{border-radius:14px;border:3px solid transparent;padding:14px 10px;cursor:pointer;font-weight:800;font-size:0.85rem;transition:transform 0.15s,border-color 0.2s;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.theme-btn.active{border-color:#6aaa64 !important;}
+.swatch{display:flex;gap:4px;}
+.swatch span{width:16px;height:16px;border-radius:4px;}
+.t-classic{background:#fff;color:#1a1a2e;border-color:#d3d6da;}
+.t-dark{background:#1a1a1b;color:#fff;border-color:#3a3a3c;}
+.t-colorful{background:linear-gradient(135deg,#e0f7fa,#fce4ec);color:#004d40;border-color:#b2dfdb;}
+.t-tiedye{background:#0d0d0d;color:#fff;background-image:conic-gradient(from 0deg,#ff006644,#ff990044,#ffff0044,#00ff8844,#0099ff44,#9900ff44,#ff006644);border-color:#ff00ff44;}
+.sclose{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:0.95rem;cursor:pointer;}
+.ssection{margin-bottom:20px;}
+.ssection label{font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--subtext);display:block;margin-bottom:10px;}
+.switch-player-btn{width:100%;padding:10px;background:none;border:2px solid var(--border);border-radius:10px;color:var(--text);font-weight:700;font-size:0.88rem;cursor:pointer;}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg2);padding:10px 22px;border-radius:12px;font-weight:700;font-size:0.9rem;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:600;white-space:nowrap;}
+#toast.show{opacity:1;}
+#game{position:relative;z-index:1;max-width:500px;margin:0 auto;padding:16px 16px 0;}
+#grid{display:grid;grid-template-rows:repeat(6,1fr);gap:5px;width:min(330px,90vw);margin:0 auto 16px;}
+.row{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.tile{aspect-ratio:1;border:2px solid var(--tile-border);background:var(--tile-empty);display:flex;align-items:center;justify-content:center;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;border-radius:4px;transition:transform 0.1s;user-select:none;color:var(--text);}
+.tile.filled{border-color:var(--subtext);animation:pop 0.1s ease;}
+.tile.reveal{border-color:transparent;color:#fff !important;}
+.tile.green{background:var(--green);}
+.tile.yellow{background:var(--yellow);}
+.tile.gray{background:var(--gray);}
+.tile.shake{animation:shake 0.5s ease;}
+.tile.bounce{animation:bounce 0.5s ease;}
+body.theme-tiedye .tile.green{background:linear-gradient(135deg,#00ff88,#00ccff);color:#000 !important;}
+body.theme-tiedye .tile.yellow{background:linear-gradient(135deg,#ffee00,#ff9900);color:#000 !important;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}60%{transform:translateY(-8px)}}
+#keyboard{max-width:500px;margin:0 auto;padding:0 8px 12px;position:relative;z-index:1;}
+.kb-row{display:flex;justify-content:center;gap:5px;margin-bottom:5px;}
+.key{height:56px;min-width:30px;padding:0 4px;flex:1;max-width:43px;border-radius:8px;border:none;background:var(--key-bg);color:var(--key-text);font-size:0.78rem;font-weight:800;cursor:pointer;transition:background 0.2s,color 0.2s,transform 0.1s;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-tap-highlight-color:transparent;}
+.key.wide{min-width:50px;max-width:60px;font-size:0.68rem;}
+.key:active{transform:scale(0.95);}
+.key.green{background:var(--green);color:#fff;}
+.key.yellow{background:var(--yellow);color:#fff;}
+.key.gray{background:var(--gray);color:#fff;}
+#result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:400;align-items:center;justify-content:center;}
+#result-overlay.on{display:flex;}
+.rmodal{background:var(--modal-bg);border-radius:24px;padding:32px 28px;text-align:center;max-width:360px;width:90%;box-shadow:var(--shadow);}
+.rmodal h2{font-size:1.6rem;font-weight:900;margin-bottom:6px;}
+.rmodal p{color:var(--subtext);font-size:0.9rem;margin-bottom:10px;}
+.rword{font-size:1.8rem;font-weight:900;letter-spacing:4px;color:var(--green);margin:10px 0;}
+.rmodal .go{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:13px;font-size:1rem;font-weight:800;cursor:pointer;margin-top:8px;}
+#tracker-wrap{max-width:820px;margin:0 auto;padding:8px 16px 32px;position:relative;z-index:1;}
+#tracker-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:var(--tracker-bg);border:1px solid var(--border);border-radius:14px;cursor:pointer;font-weight:800;font-size:0.9rem;color:var(--text);margin-bottom:12px;box-shadow:var(--shadow);}
+#tracker-inner{display:none;}
+#tracker-inner.open{display:block;}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.card{background:var(--tracker-bg);border-radius:20px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);}
+.card.full{grid-column:1/-1;}
+.card h2{font-size:0.82rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--subtext);margin-bottom:14px;}
+.player-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.player-row:last-child{border-bottom:none;}
+.pname{font-weight:700;font-size:1.05rem;flex:1;}
+.wbadge{border-radius:12px;padding:4px 14px;font-weight:800;font-size:1.3rem;color:white;}
+.wlabel{font-size:0.7rem;color:var(--subtext);text-align:right;}
+.streak{font-size:2.8rem;font-weight:900;text-align:center;color:var(--yellow);}
+.streak-sub{text-align:center;font-size:0.8rem;color:var(--subtext);margin-top:4px;}
+.chart-legend{display:flex;gap:16px;justify-content:center;margin-bottom:8px;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--subtext);font-weight:600;}
+.legend-dot{width:10px;height:10px;border-radius:2px;}
+.chart-wrap{display:flex;gap:8px;align-items:flex-end;height:120px;margin-bottom:8px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.4s;}
+.bar.mom-bar{background:var(--green);}
+.bar.dad-bar{background:#6aabdf;}
+.bv{font-size:0.62rem;font-weight:700;color:var(--subtext);}
+.bl{font-size:0.65rem;color:var(--subtext);}
+.stats{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:0.78rem;color:var(--subtext);flex-wrap:wrap;}
+.hist{max-height:400px;overflow-y:auto;}
+.hi{border-bottom:1px solid var(--border);}
+.hi:last-child{border-bottom:none;}
+.hi-header{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;cursor:pointer;user-select:none;gap:8px;}
+.hi-date{font-weight:700;font-size:0.85rem;white-space:nowrap;}
+.hi-scores{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.hi-arrow{font-size:0.7rem;color:var(--subtext);transition:transform 0.2s;display:inline-block;}
+.hi-arrow.open{transform:rotate(180deg);}
+.hi-detail{display:none;padding:8px 4px 12px;border-top:1px solid var(--border);}
+.hi-detail.open{display:block;}
+.hi-detail-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:0.84rem;}
+.hg{border-radius:8px;padding:2px 10px;font-weight:700;font-size:0.82rem;}
+.g1{background:#ffd700;color:#7a6000;}.g2{background:#6aaa64;color:white;}.g3{background:#a8d5a2;color:#1a1a2e;}.g4{background:#d4edcd;color:#1a1a2e;}.g5{background:#f8d7b0;color:#1a1a2e;}.g6{background:#f4a261;color:white;}.gX{background:#aaa;color:white;}
+.nodata{color:var(--subtext);text-align:center;padding:18px;font-size:0.88rem;opacity:0.6;}
+#cel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:700;align-items:center;justify-content:center;}
+#cel-overlay.on{display:flex;}
+.cel{background:var(--modal-bg);border-radius:28px;padding:28px;text-align:center;max-width:360px;width:90%;position:relative;}
+.cel-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--subtext);}
+.ctitle{font-size:1.5rem;font-weight:900;margin-bottom:4px;}
+.csub{color:var(--subtext);font-size:0.85rem;margin-bottom:12px;}
+#cv{border-radius:12px;display:block;margin:0 auto;}
+.cclose{margin-top:14px;padding:11px 28px;background:var(--green);color:white;border:none;border-radius:12px;font-weight:800;font-size:0.95rem;cursor:pointer;}
+@media(max-width:500px){.tgrid{grid-template-columns:1fr;}.card.full{grid-column:1;}}
+</style>
+</head>
+<body class="theme-classic">
+
+<div id="setup-screen">
+  <h1>Wordle<span class="plus">+</span></h1>
+  <p>Family Edition · Pick your player!</p>
+  <div class="setup-section">
+    <label>I am...</label>
+    <div class="setup-btns" id="player-select">
+      <button class="setup-btn" onclick="setupSelPlayer('mom',this)">
+        <div class="monogram monogram-lg mon-mom">M</div>
+        <span>Mom</span>
+      </button>
+      <button class="setup-btn" onclick="setupSelPlayer('dad',this)">
+        <div class="monogram monogram-lg mon-dad">D</div>
+        <span>Dad</span>
+      </button>
+    </div>
+  </div>
+  <div class="setup-section">
+    <label>Celebrating with...</label>
+    <div class="setup-btns" id="kid-select">
+      <button class="setup-btn jamie-sel" onclick="setupSelKid('jamie',this)"><span style="font-size:2rem">🕷️</span><span>Jamie</span></button>
+      <button class="setup-btn miles-sel" onclick="setupSelKid('miles',this)"><span style="font-size:2rem">🐰</span><span>Miles</span></button>
+      <button class="setup-btn" onclick="setupSelKid('none',this)"><span style="font-size:2rem">🚫</span><span>No kid</span></button>
+    </div>
+  </div>
+  <button class="start-btn" id="start-btn" onclick="startGame()">Let's Play! 🟩</button>
+</div>
+
+<div id="header">
+  <div id="player-chip-wrap" style="width:36px;height:36px;display:flex;align-items:center;"></div>
+  <h1>Wordle<span class="plus">+</span></h1>
+  <button class="hbtn" onclick="openSettings()">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+  </button>
+</div>
+
+<div id="settings-overlay">
+  <div class="smodal">
+    <h2>Settings</h2>
+    <div class="ssection">
+      <label>Theme</label>
+      <div class="theme-grid">
+        <button class="theme-btn t-classic active" onclick="setTheme('classic',this)"><div class="swatch"><span style="background:#6aaa64"></span><span style="background:#c9b458"></span><span style="background:#787c7e"></span></div>Classic</button>
+        <button class="theme-btn t-dark" onclick="setTheme('dark',this)"><div class="swatch"><span style="background:#538d4e"></span><span style="background:#b59f3b"></span><span style="background:#3a3a3c"></span></div>Dark</button>
+        <button class="theme-btn t-colorful" onclick="setTheme('colorful',this)"><div class="swatch"><span style="background:#00897b"></span><span style="background:#f9a825"></span><span style="background:#90a4ae"></span></div>Colorful</button>
+        <button class="theme-btn t-tiedye" onclick="setTheme('tiedye',this)"><div class="swatch"><span style="background:#ff0066"></span><span style="background:#ffee00"></span><span style="background:#00ff88"></span></div>🌈 Tie-Dye</button>
+      </div>
+    </div>
+    <div class="ssection">
+      <label>Player</label>
+      <button class="switch-player-btn" onclick="switchPlayer()">↩️ Switch Player</button>
+    </div>
+    <button class="sclose" onclick="closeSettings()">Done ✓</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="game"><div id="grid"></div></div>
+<div id="keyboard">
+  <div class="kb-row" id="kb-r1"></div>
+  <div class="kb-row" id="kb-r2"></div>
+  <div class="kb-row" id="kb-r3"></div>
+</div>
+
+<div id="result-overlay">
+  <div class="rmodal">
+    <h2 id="r-title"></h2>
+    <p id="r-sub"></p>
+    <div class="rword" id="r-word"></div>
+    <p style="color:var(--subtext);font-size:0.82rem;margin-bottom:4px;">✅ Result auto-logged!</p>
+    <button class="go" onclick="closeResult()">See Family Stats 📊</button>
+  </div>
+</div>
+
+<div id="tracker-wrap">
+  <button id="tracker-toggle" onclick="toggleTracker()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="5" width="4" height="16" rx="1"/></svg>
+    <span>Family Statistics</span>
+    <span id="toggle-arrow">▼</span>
+  </button>
+  <div id="tracker-inner">
+    <div class="tgrid">
+      <div class="card">
+        <h2>🏆 Leaderboard</h2>
+        <div class="player-row">
+          <div class="monogram mon-mom">M</div>
+          <span class="pname">Mom</span>
+          <div><div class="wbadge" id="mw" style="background:#6aaa64">0</div><div class="wlabel">wins</div></div>
+        </div>
+        <div class="player-row">
+          <div class="monogram mon-dad">D</div>
+          <span class="pname">Dad</span>
+          <div><div class="wbadge" id="dw" style="background:#6aabdf">0</div><div class="wlabel">wins</div></div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div class="streak" id="sd">—</div>
+          <div class="streak-sub" id="ss">No games yet</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📊 Guess Distribution</h2>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#6aaa64"></div>Mom</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#6aabdf"></div>Dad</div>
+        </div>
+        <div class="chart-wrap" id="chart-wrap"></div>
+        <div class="stats"><span>Games: <strong id="tot">0</strong></span><span>Mom avg: <strong id="mavg">—</strong></span><span>Dad avg: <strong id="davg">—</strong></span></div>
+      </div>
+      <div class="card full">
+        <h2>📅 Game History</h2>
+        <div class="hist" id="hist"><div class="nodata">No games yet!</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cel-overlay">
+  <div class="cel">
+    <button class="cel-close" onclick="closeCel()">✕</button>
+    <div class="ctitle" id="ct"></div>
+    <div class="csub" id="cs"></div>
+    <canvas id="cv" width="300" height="200"></canvas>
+    <br>
+    <button class="cclose" onclick="closeCel()">Awesome! 🎊</button>
+  </div>
+</div>
+
+<script>
+const ANSWERS="aback,abase,abate,abbey,abbot,abhor,abide,abler,abode,abort,about,above,abuse,abyss,acids,ached,aches,acmes,acorn,acrid,actor,acute,adage,adept,admit,adobe,adopt,adore,adorn,adult,affix,afire,afoot,afoul,after,again,agape,agate,agave,agent,agile,aging,aglow,agony,agora,agree,ahold,aided,aimer,aired,aisle,alarm,album,alder,allay,alley,allot,allow,alloy,aloft,aloof,aloud,alway,amass,amaze,amber,amble,amend,amiss,amity,ample,amuse,angel,anger,angle,angry,angst,anime,anise,ankle,annex,annoy,antic,anvil,aorta,apple,aptly,arbor,ardor,arena,argot,arise,armor,aroma,arose,array,arrow,arson,ashen,askew,assay,asset,atone,attic,audio,audit,augur,avail,avian,avoid,awake,award,aware,awash,awful,awoke,axial,azure,babel,badly,bagel,baggy,baker,barge,baron,basic,basil,basis,baste,batch,bathe,beach,beard,beast,began,begat,beget,begin,being,belay,belch,belle,below,bench,berry,beset,bigot,bingo,biome,birch,bison,blimp,blind,bliss,blitz,block,bloom,blown,blurb,blurt,bogey,booze,boozy,borax,bored,borne,bosom,botch,bough,bower,boxer,brace,braid,brake,brand,brash,brawl,brawn,break,breed,bribe,bride,brine,brink,brisk,broth,brown,buddy,buggy,built,bulge,bully,bumpy,bunny,burly,burro,butch,bylaw,byway,cabal,cabin,cagey,cairn,camel,cameo,candy,canny,canoe,caper,cargo,carry,carve,catch,cause,cedar,chaos,charm,chase,cheap,cheat,cheek,cheer,chess,chick,chief,chill,chimp,china,chirp,choir,chord,cinch,civic,civil,clamp,clang,clash,clasp,class,clean,clear,cleft,clerk,click,cliff,cling,clink,cloak,clone,close,clout,clown,cluck,clump,clung,coach,cobra,comet,comic,comma,coral,corny,couch,cough,count,court,coven,cover,cower,crack,craft,crane,crank,crash,creak,creed,creek,creep,crept,crest,crimp,crisp,croak,crone,cross,crowd,crown,crush,crust,cubic,curly,curve,cycle,daddy,daily,dairy,daisy,dance,datum,daunt,dealt,death,decay,decoy,delta,delve,demon,dense,depot,derby,devil,diner,disco,ditch,ditty,diver,dizzy,dodge,dogma,doing,donor,doubt,dough,dowdy,dowry,draft,drain,drama,drank,drape,drawl,dread,drift,drink,drive,drone,drool,droop,drove,drown,drunk,dryer,dusky,dwarf,dying,eager,eagle,early,earth,eight,elite,ember,emote,empty,enact,ended,enemy,enjoy,ethos,evade,event,every,exact,exalt,exert,exile,exist,expel,extol,extra,exult,fable,facet,faint,faith,false,fancy,farce,fatal,feast,ferry,fever,filly,flair,flame,fleck,flesh,flint,flock,flood,floor,floss,flour,flown,fluff,fluke,flunk,flute,foamy,forge,forte,forum,found,frail,frame,frank,freak,freed,fresh,front,frost,froze,fully,fungi,funky,funny,gauze,genre,ghost,giddy,girth,given,gland,glare,glass,gleam,glide,gloom,gloat,glory,gloss,glove,going,grace,grade,grain,grand,grant,graph,grasp,graze,great,greed,greet,grief,grind,groan,groin,groom,grove,growl,grown,gruel,gruff,grunt,guard,guava,guest,guile,guise,gusto,gutsy,gypsy,habit,happy,harsh,haste,haven,heart,heist,helix,hence,heron,hippo,hoard,holly,homer,honor,horde,horse,human,humid,humor,hurry,hyena,ideal,image,imply,inept,infer,inner,input,inter,intro,irony,itchy,ivory,japan,jewel,joint,joker,jolly,joust,judge,juice,juicy,juror,karma,kneel,knife,knock,known,label,lance,large,latch,later,lathe,latte,laugh,layer,leapt,learn,lease,least,leave,ledge,legal,lemon,level,light,lilac,limit,liner,lingo,liver,llama,lobby,local,lodge,logic,lorry,lotus,lower,lucky,lunar,lunch,lusty,magic,major,maker,manor,maple,march,merit,metal,minor,minus,miser,mixed,mocha,model,monks,month,moral,motel,mourn,muddy,mural,music,naive,naval,needy,never,newly,niece,nifty,night,ninja,noble,noise,noted,novel,nymph,occur,ocean,offer,often,olive,optic,orbit,order,other,ounce,outer,outdo,owner,oxide,ozone,paddy,paint,panic,pansy,party,pasta,patch,patio,pause,peace,pearl,penal,penny,perch,peril,petty,phase,piano,pinch,pixel,pizza,place,plaid,plain,plank,plant,plaza,plead,pleat,pluck,plumb,plume,plump,plunk,plush,point,poise,polar,poker,poppy,power,press,price,prick,pride,prime,privy,prize,probe,prone,proof,prose,proud,prove,prowl,psalm,pulse,punch,puppy,purge,purse,quail,qualm,query,quest,queue,quick,quiet,quirk,quite,quota,quote,rabbi,radar,radio,rainy,rally,raven,reach,rebel,recap,reign,relax,relay,relic,renew,repay,rerun,rider,rifle,ripen,risen,rivet,robot,rocky,rouge,rough,round,route,rugby,ruler,rupee,rusty,sadly,saint,sauce,savor,scald,scalp,scamp,scant,scare,scarf,scene,scone,scoop,scope,score,scout,scram,screw,scrub,seize,sense,serum,serve,seven,sever,shade,shame,shape,share,shark,sharp,shave,shawl,sheer,shift,shire,shoal,shore,shout,shove,showy,shrug,sigma,silly,sixty,skate,skill,skimp,skull,slang,slash,slate,slave,sleek,sleet,slept,slice,slide,slime,sling,sloop,slope,sloth,slump,slunk,smack,small,smart,smash,smear,smell,smelt,smile,smirk,smite,smoke,snack,snake,snare,sneak,sniff,snore,solar,solve,sorry,south,spare,spark,speak,spear,speck,speed,spell,spend,spice,spill,spine,spite,splat,spoil,spook,spoon,spore,sport,spout,spray,spree,sprig,spunk,squad,squat,squid,stack,staff,stage,stain,stair,stake,stale,stall,stamp,stank,stare,stark,start,stash,state,steal,steam,steel,steep,steer,stern,stock,stoic,stone,stood,store,storm,story,stout,strap,straw,stray,strip,strut,study,stump,stunt,style,sugar,suite,sulky,sunny,super,surge,swamp,swear,sweat,sweep,sweet,swept,swirl,swoon,swore,syrup,tabby,table,talon,tango,taunt,teeth,tempo,tense,tenth,tepid,terms,terse,thank,theme,their,there,these,thick,thigh,thing,think,third,thorn,three,threw,throw,tidal,tiger,tilde,tinge,tipsy,titan,title,today,token,total,touch,tough,towel,tower,track,trade,trail,train,trait,tramp,trash,trawl,treat,trend,trial,tribe,trick,tried,tripe,trite,troll,tromp,troop,trout,truce,truck,truly,trump,trunk,tryst,tulip,tumor,tummy,tuner,tunic,turbo,twang,tweak,twice,twirl,twist,ultra,uncle,unify,union,unite,until,upper,upset,urban,usher,utter,vague,valid,valor,value,valve,vapor,vault,vigor,viola,viper,viral,vital,vivid,vogue,voice,voter,vouch,vying,wafer,wager,waltz,watch,water,weary,weave,wedge,weird,whale,wheat,wheel,where,which,while,whiff,whisk,white,whole,whose,wield,witch,women,worry,worse,worst,worth,wrath,wrist,yacht,yearn,yield,young,youth,zesty,zippy".split(',');
+
+const EXTRA="aahed,aalii,abaci,abaft,abash,abaya,abbes,abeam,abear,abele,abers,abets,abins,aboon,abore,abrim,abrin,abris,absit,abuna,abune,abuts,abyes,abysm,acari,acerb,acers,aceta,ached,achoo,acing,acini,ackee,acker,acned,acnes,acock,acold,acred,acres,acted,actin,acton,adaws,addax,added,adder,addle,adeem,adens,adibs,adman,admen,admin,adown,adoze,adred,adsum,aduki,adunc,adust,aeons,aerie,aeros,afald,afara,afars,afear,afore,agama,agami,agars,agast,agaze,agene,agers,aggie,aggro,aghas,agios,agism,agist,agita,aglee,aglet,agley,agloo,agmas,agoge,agone,agons,agood,agria,agrin,agued,agues,aguna,aguti,aheap,ahigh,ahull,ahuru,aidos,aioli,aired,airer,airns,airts,aitch,aiver,ajuga,ajwan,akees,akela,akene,aking,alack,alamo,aland,alane,alang,alans,alant,alapa,alaps,alary,alate,albas,alcid,alcos,aldea,alder,aldol,alecs,aleph,alews,alfas,algal,algas,algid,algin,algor,algum,alias,alins,alkie,alkos,allee,allel,allis,allod,almah,almas,almes,almud,almug,alods,aloed,aloes,aloin,alowe,altar,altho,alula,alums,alure,amahs,amain,amate,ambit,ambos,ameer,amens,ament,amice,amici,amide,amido,amids,amies,amiga,amino,amnio,amoks,amole,amort,amour,amove,amrit,amuck,anear,anele,anent,angas,anigh,anile,anils,anima,ankhs,annul,anoas,anole,anomy,anted,antes,antis,antra,antre,apace,apage,apaid,apart,apers,apery,aphid,aphis,apian,aping,apiol,apish,apode,apods,appel,araks,arame,arced,areal,areca,areic,arene,arete,arets,argal,argan,argil,argle,argol,argon,ariel,ariki,arils,ariot,arked,arles,armed,armet,armil,aroid,arras,arret,arris,arses,artic,artsy,arvos,aryls,asana,ascot,asdic,ashed,ashes,asked,asker,aslew,aslop,assai,asses,astir,atilt,atlas,atman,atmas,atoll,atomy,atopy,audad,auger,aught,aurae,aural,aurar,auras,auris,avast,avels,avens,avert,avion,aviso,avows,awing,awned,awner,awols,axels,axles,axone,axons,ayahs,ayelp,ayins,azide,azido,azine,azlon,azoic,azole,azote,azoth,azuki,azurn,baaed,baals,babas,baboo,babul,bacca,backs,bacon,bails,bairn,baits,baiza,baken,bales,balky,balls,balmy,balsa,banal,bands,bangs,banjo,banns,bants,barbe,bards,bared,barer,bares,barre,baulk,bayou,beans,bears,beats,beaus,beaux,bebop,becap,befit,belch,bends,benis,benne,benni,bepat,bergs,berme,berms,bevel,bidet,bifid,biffy,biked,biker,bikes,bilge,bills,bimbo,binge,bints,biped,bitsy,blabs,bland,blank,blare,blast,bleat,bleed,blend,bless,bloke,blond,blood,bloat,bloop,blues,bluey,blunt,blype,boggy,bogle,bolts,bombs,bonce,bonds,boner,bones,boney,bonny,bonus,booby,boody,borer,bores,bossy,bothy,boule,bound,bowed,boyar,brads,braes,brags,brash,brass,brats,brava,brave,brays,braze,bream,brees,brews,briar,brier,brigs,brill,brims,broad,broke,broil,brood,brows,brute,bugle,bulky,bumps,bunko,burbs,burns,burps,cacao,caddy,calla,calls,calms,calve,caner,canes,caput,carat,carbo,carte,caste,cavil,ceils,cells,ceria,chafe,chaff,champ,chant,chard,chary,child,chime,chive,chops,chuck,chuff,chump,chunk,churl,chyme,civvy,clack,claim,clank,claps,clary,clave,claws,clays,clime,clods,clops,clots,cloud,clout,clove,cloys,clubs,clung,coals,coaly,coati,cobia,cocos,codon,coked,cokes,coley,colon,color,combo,combs,comfy,comte,conus,copra,corgi,corps,coset,cotta,coupe,coups,cowry,coypu,crabs,crags,crake,cramp,crane,craps,crazy,credo,crepe,crits,croci,croft,croon,crops,croup,crows,crude,cruel,crump,culpa,curbs,curds,cushy,daube,daven,decal,decry,denim,deter,detox,dhuti,dicky,digit,dingy,dipso,dishy,ditsy,ditzy,dixit,dolce,donut,dopey,dormy,dotal,dotty,downy,dozed,dozen,droll,dross,drusy,ducat,ducky,duddy,dully,dumpy,dunce,duped,duple,duppy,dusty,dwelt,eagre,eaten,eclat,elbow,elder,elfin,emcee,emery,epact,epoxy,ergot,etude,evict,exude,fared,farer,fatty,faugh,favor,feint,femme,fence,fetid,fiber,fiche,ficus,finch,fitly,fizzy,flaky,flams,flaps,flare,flawy,flexo,flick,flier,flips,flirt,flogs,flops,flout,fluff,fluke,flunk,folio,folly,foray,fosse,frees,freer,friar,fritz,frizz,frock,frond,frump,furry,fuzzy,gabby,gamer,gamin,gamut,gassy,gaudy,gazed,gecko,genie,glazy,glean,gleet,golem,gorge,gouge,gouty,grabs,grail,gramp,grebe,greet,greys,gripe,gripy,grope,grout,grubs,grump,guano,gulch,gunky,gyrus,hadji,haiku,hammy,hanky,hasty,haute,hazel,heady,hippy,hobby,honey,horsy,huffy,hulky,humus,hunky,icker,idiot,igloo,imago,inane,incur,indie,ingot,ionic,irked,jabot,jaggy,jazzy,jiffy,jimmy,jumbo,jumpy,kebab,ketch,kinky,kitty,klutz,knave,kneed,knelt,knobs,knoll,knots,kopek,kudos,laden,ladle,lardy,larky,larva,leafy,lefty,leggy,lemur,libel,lipid,listy,loamy,loopy,lousy,lover,lowly,lucid,lumpy,lymph,lyric,madly,mangy,manic,manly,manky,matey,mealy,meaty,melee,messy,milky,minty,mirky,mirth,misty,mogul,moldy,money,moody,moony,mossy,mousy,muggy,mulch,murky,musty,myrrh,nippy,nobly,noddy,noisy,norma,notch,nutty,oddly,oldie,ombre,ontic,oozed,oomph,opted,outgo,ovoid,owing,pally,palmy,panda,pasty,peaky,perky,phony,piggy,pithy,plait,plane,plash,plasm,plate,plebe,plonk,plops,porch,posed,potty,pouty,pricy,prosy,proxy,pudgy,punky,pupil,pursy,pushy,quaff,quash,quasi,rabid,raspy,ratty,rebbe,rebut,redox,reedy,refit,regal,repro,retro,reuse,ridgy,risky,ritzy,rondo,rowdy,ruddy,rumba,runny,sabot,salty,sandy,sappy,sassy,saucy,savvy,scaly,sedan,seedy,sepoy,shady,shall,shank,sheen,sheep,shelf,shell,shrub,shuck,silky,sinew,sissy,skiff,skimp,skunk,slimy,slobs,slogs,slops,slosh,slyly,snaky,snoop,snort,snowy,soggy,soppy,soupy,spasm,sprat,spumy,stagy,staid,stave,stiff,stirk,stomp,stork,strep,stuck,stung,stunk,suave,sudsy,tacky,tangy,tardy,tatty,tawny,testy,tabby,taint,tarry,tasty,techy,tippy,toffy,touchy,tubby,tusky,tying,typic,umami,uncut,undue,unfed,unfit,unwed,upped,vapid,vaunt,venom,verge,veiny,venal,vetch,villa,virtu,visor,vista,vomit,vroom,waddy,wacky,waken,wanly,warty,weedy,wetly,whack,whiff,whiny,wimpy,windy,wispy,witty,wooly,wormy,woozy,zonal,zombie".split(',');
+
+const ALL_WORDS=new Set([...ANSWERS,...EXTRA]);
+
+function getDailyWord(){
+  const e=new Date('2024-01-01'),d=Math.floor((new Date()-e)/86400000);
+  return ANSWERS[d%ANSWERS.length].toUpperCase();
+}
+const TARGET=getDailyWord();
+let currentRow=0,currentCol=0,currentGuess=[],gameOver=false,revealInProgress=false,keyMap={};
+let currentPlayer=null,currentKid=null;
+let S=JSON.parse(localStorage.getItem('wft6')||'null')||{mom:0,dad:0,distMom:{1:0,2:0,3:0,4:0,5:0,6:0,X:0},distDad:{1:0,2:0,3:0,4:0,5:0,6:0,X:0},hist:[],sk:0,sh:null};
+const saveS=()=>localStorage.setItem('wft6',JSON.stringify(S));
+let currentTheme=localStorage.getItem('wft6-theme')||'classic';
+let af=null,celTimer=null;
+let setupPlayer=null,setupKid=null;
+const TODAY=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+function setupSelPlayer(p,el){
+  setupPlayer=p;
+  document.querySelectorAll('#player-select .setup-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  checkSetupReady();
+}
+function setupSelKid(k,el){
+  setupKid=k;
+  document.querySelectorAll('#kid-select .setup-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  checkSetupReady();
+}
+function checkSetupReady(){
+  const btn=document.getElementById('start-btn');
+  (setupPlayer&&setupKid!==null)?btn.classList.add('ready'):btn.classList.remove('ready');
+}
+function startGame(){
+  if(!setupPlayer||setupKid===null)return;
+  currentPlayer=setupPlayer;currentKid=setupKid;
+  currentRow=0;currentCol=0;currentGuess=[];gameOver=false;revealInProgress=false;keyMap={};
+  buildGrid();buildKeyboard();
+  document.getElementById('setup-screen').style.display='none';
+  const wrap=document.getElementById('player-chip-wrap');
+  wrap.innerHTML=`<div class="monogram ${currentPlayer==='mom'?'mon-mom':'mon-dad'}">${currentPlayer==='mom'?'M':'D'}</div>`;
+}
+function switchPlayer(){
+  closeSettings();
+  document.getElementById('setup-screen').style.display='flex';
+  setupPlayer=null;setupKid=null;
+  document.querySelectorAll('.setup-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('start-btn').classList.remove('ready');
+}
+function buildGrid(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  for(let r=0;r<6;r++){
+    const row=document.createElement('div');row.className='row';row.id='row-'+r;
+    for(let c=0;c<5;c++){const t=document.createElement('div');t.className='tile';t.id=`t-${r}-${c}`;row.appendChild(t);}
+    g.appendChild(row);
+  }
+}
+const KBR=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']];
+function buildKeyboard(){
+  KBR.forEach((row,ri)=>{
+    const el=document.getElementById(`kb-r${ri+1}`);el.innerHTML='';
+    row.forEach(k=>{
+      const b=document.createElement('button');
+      b.className='key'+(k==='ENTER'||k==='⌫'?' wide':'');
+      b.textContent=k;b.id='key-'+k;
+      b.addEventListener('click',()=>handleKey(k));
+      el.appendChild(b);
+    });
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='Enter')handleKey('ENTER');
+  else if(e.key==='Backspace')handleKey('⌫');
+  else if(/^[a-zA-Z]$/.test(e.key))handleKey(e.key.toUpperCase());
+});
+function handleKey(k){
+  if(gameOver||revealInProgress||!currentPlayer)return;
+  if(k==='⌫'){
+    if(currentCol>0){currentCol--;currentGuess.pop();const t=document.getElementById(`t-${currentRow}-${currentCol}`);t.textContent='';t.classList.remove('filled');}
+  } else if(k==='ENTER'){
+    submitGuess();
+  } else if(/^[A-Z]$/.test(k)&&currentCol<5){
+    currentGuess.push(k);const t=document.getElementById(`t-${currentRow}-${currentCol}`);t.textContent=k;t.classList.add('filled');currentCol++;
+  }
+}
+function submitGuess(){
+  if(currentCol<5){shakeRow(currentRow);showToast('Not enough letters');return;}
+  const guess=currentGuess.join('').toLowerCase();
+  if(!ALL_WORDS.has(guess)){shakeRow(currentRow);showToast('Not in word list');return;}
+  revealRow(currentRow,currentGuess.join(''));
+}
+function revealRow(row,guess){
+  revealInProgress=true;
+  const res=getResult(guess,TARGET);
+  for(let c=0;c<5;c++){
+    setTimeout(()=>{
+      const t=document.getElementById(`t-${row}-${c}`);
+      t.classList.add('reveal',res[c]);
+      const k=guess[c],cur=keyMap[k];
+      if(res[c]==='green'||(res[c]==='yellow'&&cur!=='green')||(!cur&&res[c]==='gray')){
+        keyMap[k]=res[c];const ke=document.getElementById('key-'+k);
+        if(ke)ke.className=`key${k.length>1?' wide':''} ${res[c]}`;
+      }
+      if(c===4){
+        revealInProgress=false;
+        const won=res.every(r=>r==='green');
+        if(won){setTimeout(()=>bounceRow(row),100);setTimeout(()=>onGameEnd(true,row+1),700);gameOver=true;}
+        else if(row===5){setTimeout(()=>onGameEnd(false,0),400);gameOver=true;}
+        else{currentRow++;currentCol=0;currentGuess=[];}
+      }
+    },c*350);
+  }
+}
+function getResult(g,t){
+  const res=Array(5).fill('gray'),pool=t.split('');
+  for(let i=0;i<5;i++)if(g[i]===t[i]){res[i]='green';pool[i]=null;}
+  for(let i=0;i<5;i++)if(res[i]!=='green'){const x=pool.indexOf(g[i]);if(x!==-1){res[i]='yellow';pool[x]=null;}}
+  return res;
+}
+function shakeRow(r){const ts=document.querySelectorAll(`#row-${r} .tile`);ts.forEach(t=>{t.classList.remove('shake');void t.offsetWidth;t.classList.add('shake');});setTimeout(()=>ts.forEach(t=>t.classList.remove('shake')),600);}
+function bounceRow(r){const ts=document.querySelectorAll(`#row-${r} .tile`);ts.forEach((t,i)=>setTimeout(()=>{t.classList.add('bounce');setTimeout(()=>t.classList.remove('bounce'),500);},i*100));}
+const MSGS=['Genius! 🏆','Magnificent! 🌟','Impressive! 💪','Splendid! 🎯','Great! 👏','Phew! 😅'];
+function onGameEnd(won,guesses){
+  const g=won?guesses:'X';
+  const dist=currentPlayer==='mom'?S.distMom:S.distDad;
+  if(won){S[currentPlayer]++;if(S.sh===currentPlayer)S.sk++;else{S.sh=currentPlayer;S.sk=1;}}
+  else{if(S.sh===currentPlayer){S.sh=null;S.sk=0;}}
+  dist[g]=(dist[g]||0)+1;
+  const todayIdx=S.hist.findIndex(h=>h.d===TODAY&&h.p===currentPlayer);
+  const entry={p:currentPlayer,g:g,d:TODAY,w:TARGET};
+  if(todayIdx>=0)S.hist[todayIdx]=entry;else S.hist.unshift(entry);
+  if(S.hist.length>200)S.hist.pop();
+  saveS();renderTracker();
+  document.getElementById('r-title').textContent=won?MSGS[guesses-1]:'Better luck tomorrow 😔';
+  document.getElementById('r-sub').textContent=won?`${currentPlayer==='mom'?'Mom':'Dad'} got it in ${guesses} guess${guesses===1?'':'es'}!`:'The word was:';
+  document.getElementById('r-word').textContent=TARGET;
+  document.getElementById('result-overlay').classList.add('on');
+  if(won&&currentKid&&currentKid!=='none')window._pendingCel=currentKid;
+}
+function closeResult(){
+  document.getElementById('result-overlay').classList.remove('on');
+  const inner=document.getElementById('tracker-inner');
+  if(!inner.classList.contains('open')){inner.classList.add('open');document.getElementById('toggle-arrow').textContent='▲';}
+  setTimeout(()=>document.getElementById('tracker-wrap').scrollIntoView({behavior:'smooth'}),200);
+  if(window._pendingCel){setTimeout(()=>{celebrate(window._pendingCel);window._pendingCel=null;},600);}
+}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800);}
+function openSettings(){document.getElementById('settings-overlay').classList.add('on');}
+function closeSettings(){document.getElementById('settings-overlay').classList.remove('on');}
+document.getElementById('settings-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSettings();});
+function setTheme(theme,btn){currentTheme=theme;localStorage.setItem('wft6-theme',theme);document.body.className='theme-'+theme;document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+function applyTheme(){document.body.className='theme-'+currentTheme;const map={classic:0,dark:1,colorful:2,tiedye:3};const btns=document.querySelectorAll('.theme-btn');if(btns[map[currentTheme]])btns[map[currentTheme]].classList.add('active');}
+function toggleTracker(){
+  const i=document.getElementById('tracker-inner'),a=document.getElementById('toggle-arrow');
+  i.classList.contains('open')?(i.classList.remove('open'),a.textContent='▼'):(i.classList.add('open'),a.textContent='▲');
+}
+function buildChart(){
+  const wrap=document.getElementById('chart-wrap');wrap.innerHTML='';
+  const keys=[1,2,3,4,5,6,'X'];
+  const mVals=keys.map(k=>S.distMom[k]||0);
+  const dVals=keys.map(k=>S.distDad[k]||0);
+  const max=Math.max(1,...mVals,...dVals);
+  keys.forEach((k,i)=>{
+    const col=document.createElement('div');col.className='bar-col';
+    const mv=mVals[i],dv=dVals[i];
+    const mh=Math.max(4,mv/max*100),dh=Math.max(4,dv/max*100);
+    col.innerHTML=`<div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:110px;justify-content:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;">
+        <span class="bv" style="font-size:0.58rem">${mv||''}</span>
+        <div class="bar mom-bar" style="height:${mh}px;width:100%"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;">
+        <span class="bv" style="font-size:0.58rem">${dv||''}</span>
+        <div class="bar dad-bar" style="height:${dh}px;width:100%"></div>
+      </div>
+    </div><span class="bl">${k}</span>`;
+    wrap.appendChild(col);
+  });
+}
+function renderTracker(){
+  document.getElementById('mw').textContent=S.mom;
+  document.getElementById('dw').textContent=S.dad;
+  if(S.sh&&S.sk>0){document.getElementById('sd').textContent='🔥 '+S.sk;document.getElementById('ss').textContent=(S.sh==='mom'?'Mom':'Dad')+' win streak';}
+  else{document.getElementById('sd').textContent='—';document.getElementById('ss').textContent='No active streak';}
+  buildChart();
+  const mKeys=[1,2,3,4,5,6];
+  let mSum=0,mSol=0,dSum=0,dSol=0;
+  mKeys.forEach(k=>{mSum+=k*(S.distMom[k]||0);mSol+=(S.distMom[k]||0);dSum+=k*(S.distDad[k]||0);dSol+=(S.distDad[k]||0);});
+  const tot=Object.values(S.distMom).reduce((a,b)=>a+b,0)+Object.values(S.distDad).reduce((a,b)=>a+b,0);
+  document.getElementById('tot').textContent=tot;
+  document.getElementById('mavg').textContent=mSol?(mSum/mSol).toFixed(1):'—';
+  document.getElementById('davg').textContent=dSol?(dSum/dSol).toFixed(1):'—';
+  renderHistory();
+}
+function renderHistory(){
+  const el=document.getElementById('hist');
+  if(!S.hist.length){el.innerHTML='<div class="nodata">No games yet!</div>';return;}
+  const byDate={};
+  S.hist.forEach(h=>{if(!byDate[h.d])byDate[h.d]=[];byDate[h.d].push(h);});
+  const dates=Object.keys(byDate);
+  el.innerHTML=dates.map((date,di)=>{
+    const entries=byDate[date];
+    const isToday=date===TODAY;
+    const wordDisplay=isToday
+      ?'<span style="color:var(--subtext);font-size:0.75rem;font-weight:600">Today</span>'
+      :`<span style="font-weight:900;font-size:0.82rem;letter-spacing:2px;color:var(--green)">${entries[0].w||'?????'}</span>`;
+    const scorePills=entries.map(e=>{
+      const cls=e.g==='X'?'gX':'g'+e.g;
+      const color=e.p==='mom'?'#6aaa64':'#6aabdf';
+      return `<span class="hg ${cls}" style="outline:2px solid ${color};outline-offset:1px;font-size:0.75rem;padding:1px 7px">${e.g}</span>`;
+    }).join('');
+    const detailRows=entries.map(e=>{
+      const cls=e.g==='X'?'gX':'g'+e.g;
+      const lbl=e.g==='X'?'❌ Failed':e.g===1?'⭐ 1 guess!':e.g+' guesses';
+      const color=e.p==='mom'?'#6aaa64':'#6aabdf';
+      return `<div class="hi-detail-row">
+        <div class="monogram" style="width:28px;height:28px;border-radius:5px;font-size:0.85rem;background:${color};">${e.p==='mom'?'M':'D'}</div>
+        <span style="font-weight:700">${e.p==='mom'?'Mom':'Dad'}</span>
+        <span class="hg ${cls}">${lbl}</span>
+      </div>`;
+    }).join('');
+    return `<div class="hi">
+      <div class="hi-header" onclick="toggleHist('hd-${di}','ha-${di}')">
+        <span class="hi-date">${date}</span>
+        ${wordDisplay}
+        <div class="hi-scores">${scorePills}<span class="hi-arrow" id="ha-${di}">▼</span></div>
+      </div>
+      <div class="hi-detail" id="hd-${di}">${detailRows}</div>
+    </div>`;
+  }).join('');
+}
+function toggleHist(detailId,arrowId){
+  const d=document.getElementById(detailId),a=document.getElementById(arrowId);
+  d.classList.contains('open')?(d.classList.remove('open'),a.classList.remove('open')):(d.classList.add('open'),a.classList.add('open'));
+}
+function celebrate(kid){
+  document.getElementById('cel-overlay').classList.add('on');
+  if(kid==='jamie'){
+    document.getElementById('ct').textContent='🕷️ Jamie Wins!';
+    document.getElementById('cs').textContent='Spider-Jamie saves the day!';
+    drawSpider();
+  } else {
+    document.getElementById('ct').textContent='🐰 Miles Wins!';
+    document.getElementById('cs').textContent='Miles hops to victory!';
+    drawBunny();
+  }
+  celTimer=setTimeout(closeCel,10000);
+}
+function closeCel(){
+  document.getElementById('cel-overlay').classList.remove('on');
+  if(af){cancelAnimationFrame(af);af=null;}
+  if(celTimer){clearTimeout(celTimer);celTimer=null;}
+  document.getElementById('cv').getContext('2d').clearRect(0,0,300,200);
+}
+function drawSpider(){
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  const W=300,H=200;let t=0;
+  const stars=Array.from({length:20},()=>({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2,phase:Math.random()*Math.PI*2}));
+  const conf=Array.from({length:30},()=>({x:Math.random()*W,y:Math.random()*H-H,vx:(Math.random()-0.5)*2,vy:1.5+Math.random()*2,c:['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c77dff'][Math.floor(Math.random()*5)],r:Math.random()*4+2,rot:Math.random()*Math.PI*2,vr:(Math.random()-0.5)*0.2}));
+  function drawNintendoSpider(cx,cy,s,legPhase){
+    ctx.strokeStyle='rgba(200,200,220,0.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,cy-18*s);ctx.stroke();
+    ctx.fillStyle='#2d2d2d';ctx.beginPath();ctx.ellipse(cx,cy,14*s,11*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.18)';ctx.beginPath();ctx.ellipse(cx-4*s,cy-4*s,5*s,3*s,-0.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2d2d2d';ctx.beginPath();ctx.ellipse(cx,cy-18*s,10*s,8*s,0,0,Math.PI*2);ctx.fill();
+    [-4,4].forEach(ox=>{ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(cx+ox*s,cy-19*s,4*s,4*s,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222';ctx.beginPath();ctx.arc(cx+ox*s+s*0.5,cy-19*s,2.5*s,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx+ox*s+s,cy-20*s,1*s,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(cx,cy-3*s);ctx.lineTo(cx-4*s,cy+2*s);ctx.lineTo(cx,cy);ctx.lineTo(cx+4*s,cy+2*s);ctx.closePath();ctx.fill();
+    [[-1,-1],[-1,0],[-1,1],[-1,2],[1,-1],[1,0],[1,1],[1,2]].forEach(([side,idx])=>{
+      const phase=legPhase+idx*0.4,bendY=Math.sin(phase)*6*s,baseX=cx+side*12*s,baseY=cy+idx*4*s,midX=cx+side*26*s,midY=baseY+8*s+bendY,endX=cx+side*20*s,endY=baseY+18*s;
+      ctx.strokeStyle='#2d2d2d';ctx.lineWidth=2.5*s;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(baseX,baseY);ctx.quadraticCurveTo(midX,midY,endX,endY);ctx.stroke();
+    });
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5*s;ctx.lineCap='round';ctx.beginPath();ctx.arc(cx,cy-17*s,3*s,0.2,Math.PI-0.2);ctx.stroke();
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1a1a3e');bg.addColorStop(1,'#0d0d1f');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    stars.forEach(s=>{const b=0.4+0.6*Math.abs(Math.sin(t*0.05+s.phase));ctx.fillStyle=`rgba(255,255,200,${b})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});
+    conf.forEach(c=>{c.x+=c.vx;c.y+=c.vy;c.rot+=c.vr;if(c.y>H+10)c.y=-10;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);ctx.fillStyle=c.c;ctx.fillRect(-c.r,-c.r/2,c.r*2,c.r);ctx.restore();});
+    const spiderY=130+Math.sin(t*0.1)*18,spiderScale=1+Math.sin(t*0.2)*0.05;
+    drawNintendoSpider(150,spiderY,spiderScale,t*0.15);
+    ctx.font='bold 20px "Segoe UI",system-ui';ctx.textAlign='center';ctx.fillStyle='#ffd93d';ctx.fillText('JAMIE WINS! 🎉',150,26);
+    t++;af=requestAnimationFrame(loop);
+  }
+  loop();
+}
+function drawBunny(){
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  const W=300,H=200;let t=0;
+  const conf=Array.from({length:30},()=>({x:Math.random()*W,y:Math.random()*H-H,vx:(Math.random()-0.5)*2,vy:1.5+Math.random()*2,c:['#ff9ff3','#ffd93d','#6bcb77','#4d96ff','#ff6b6b'][Math.floor(Math.random()*5)],r:Math.random()*4+2,rot:Math.random()*Math.PI*2,vr:(Math.random()-0.5)*0.2}));
+  function drawNintendoBunny(cx,cy,s){
+    ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(cx,cy+32*s,14*s,4*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(cx-10*s,cy+10*s,5*s,5*s,0,0,Math.PI*2);ctx.fill();
+    const hopL=Math.abs(Math.sin(t*0.25))*8;
+    ctx.fillStyle='#f0e0f0';
+    ctx.beginPath();ctx.ellipse(cx-8*s,cy+28*s+hopL,8*s,4*s,0.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+4*s,cy+28*s-hopL,8*s,4*s,-0.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx,cy+8*s,14*s,18*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(cx+1*s,cy+12*s,8*s,11*s,0,0,Math.PI*2);ctx.fill();
+    const armSwing=Math.sin(t*0.25)*8;
+    ctx.fillStyle='#f5e6f5';
+    ctx.beginPath();ctx.ellipse(cx-12*s,cy+2*s+armSwing,4*s,7*s,0.4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+12*s,cy+2*s-armSwing,4*s,7*s,-0.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f0d8f0';
+    ctx.beginPath();ctx.ellipse(cx-14*s,cy+8*s+armSwing,4*s,3*s,0.4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+14*s,cy+8*s-armSwing,4*s,3*s,-0.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx,cy-12*s,13*s,12*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx-7*s,cy-28*s,4*s,12*s,-0.15,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffb3d9';ctx.beginPath();ctx.ellipse(cx-7*s,cy-28*s,2*s,9*s,-0.15,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx+7*s,cy-28*s,4*s,12*s,0.15,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffb3d9';ctx.beginPath();ctx.ellipse(cx+7*s,cy-28*s,2*s,9*s,0.15,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx-9*s,cy-36*s,4*s,5*s,0.7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5e6f5';ctx.beginPath();ctx.ellipse(cx+9*s,cy-36*s,4*s,5*s,-0.7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(cx-5*s,cy-13*s,3.5*s,3.5*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(cx+5*s,cy-13*s,3.5*s,3.5*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-4*s,cy-14*s,1.3*s,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx+6*s,cy-14*s,1.3*s,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff99bb';ctx.beginPath();ctx.ellipse(cx,cy-9*s,2.5*s,2*s,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(100,80,100,0.4)';ctx.lineWidth=0.8*s;ctx.lineCap='round';
+    [[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1]].forEach(([side,tilt])=>{ctx.beginPath();ctx.moveTo(cx+side*2*s,cy-8*s);ctx.lineTo(cx+side*14*s,cy-8*s+tilt*2*s);ctx.stroke();});
+    ctx.strokeStyle='#dd88aa';ctx.lineWidth=1.5*s;ctx.lineCap='round';
+    ctx.beginPath();ctx.arc(cx,cy-7*s,4*s,0.15,Math.PI-0.15);ctx.stroke();
+    ctx.fillStyle='rgba(255,150,180,0.25)';ctx.beginPath();ctx.ellipse(cx-9*s,cy-10*s,4*s,3*s,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+9*s,cy-10*s,4*s,3*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff7700';ctx.beginPath();ctx.moveTo(cx+14*s,cy+5*s-armSwing);ctx.lineTo(cx+22*s,cy+18*s-armSwing);ctx.lineTo(cx+17*s,cy+18*s-armSwing);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#44aa22';ctx.lineWidth=1.5*s;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx+18*s,cy+5*s-armSwing);ctx.lineTo(cx+16*s,cy+1*s-armSwing);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+18*s,cy+5*s-armSwing);ctx.lineTo(cx+21*s,cy+1*s-armSwing);ctx.stroke();
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#ffe0f7');bg.addColorStop(0.6,'#fff0fb');bg.addColorStop(1,'#d4f5d4');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#7ec850';ctx.fillRect(0,158,W,42);ctx.fillStyle='#5ab040';ctx.fillRect(0,156,W,6);
+    [{x:30,c:'#ff9ff3'},{x:80,c:'#ffd700'},{x:200,c:'#ff9ff3'},{x:250,c:'#ffd700'},{x:270,c:'#ff6b6b'}].forEach(f=>{
+      ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,154,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffee00';ctx.beginPath();ctx.arc(f.x,154,2.5,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#5ab040';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(f.x,159);ctx.lineTo(f.x,168);ctx.stroke();
+    });
+    [[40,20],[260,15],[150,10],[80,35],[220,30]].forEach(([sx,sy],i)=>{
+      const b=0.5+0.5*Math.sin(t*0.08+i);
+      ctx.fillStyle=`rgba(255,180,220,${b})`;
+      ctx.beginPath();ctx.arc(sx,sy,3+2*Math.sin(t*0.06+i),0,Math.PI*2);ctx.fill();
+    });
+    conf.forEach(c=>{c.x+=c.vx;c.y+=c.vy;c.rot+=c.vr;if(c.y>H+10)c.y=-10;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);ctx.fillStyle=c.c;ctx.fillRect(-c.r,-c.r/2,c.r*2,c.r);ctx.restore();});
+    const jumpH=Math.pow(Math.abs(Math.sin(t*0.14)),0.7)*42;
+    const bx=150+Math.sin(t*0.04)*30;
+    drawNintendoBunny(bx,140-jumpH,1.05);
+    ctx.font='bold 20px "Segoe UI",system-ui';ctx.textAlign='center';
+    ctx.fillStyle='#cc44aa';ctx.strokeStyle='#fff';ctx.lineWidth=3;
+    ctx.strokeText('MILES WINS! 🐰',150,22);ctx.fillText('MILES WINS! 🐰',150,22);
+    ctx.font='13px "Segoe UI",system-ui';ctx.fillStyle='#336633';ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2;
+    ctx.strokeText('Hippity hoppity! 🥕',150,40);ctx.fillText('Hippity hoppity! 🥕',150,40);
+    t++;af=requestAnimationFrame(loop);
+  }
+  loop();
+}
+buildGrid();buildKeyboard();applyTheme();renderTracker();
+</script>
+</body>
+</html>
